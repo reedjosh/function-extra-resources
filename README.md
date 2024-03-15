@@ -9,6 +9,36 @@ A function for selectiong generic resources via [composition function][functions
 ...
 
 
+# Local dev.
+
+For now I'm just using air.
+
+I run `~/go/bin/air -- --insecure --debug --address localhost:9443`.
+
+In this manner I get autoreload.
+
+I then run `./run.sh` to run the function.
+
+
+
+..
+..
+..
+..
+..
+..
+..
+Below here is template generated docs.
+..
+..
+..
+..
+..
+..
+..
+
+
+
 To learn how to use this template:
 
 * [Follow the guide to writing a composition function in Go][function guide]
