@@ -1,11 +1,12 @@
 # function-generic-resources
 [![CI](https://github.com/crossplane/function-template-go/actions/workflows/ci.yml/badge.svg)](https://github.com/crossplane/function-template-go/actions/workflows/ci.yml)
 
-A function for selectiong generic resources via [composition function][functions]s in [Go][go].
+A function for selecting generic resources via [composition function][functions]s in [Go][go].
 
 **just a fork of the function template ATM**
 
 ...
+
 ...
 
 
@@ -22,21 +23,32 @@ I then run `./run.sh` to run the function.
 
 
 ..
-..
-..
-..
-..
-..
-..
-Below here is template generated docs.
-..
-..
-..
-..
-..
-..
+
 ..
 
+..
+
+..
+
+..
+
+..
+
+..
+Below here are just template generated docs.
+..
+
+..
+
+..
+
+..
+
+..
+
+..
+
+..
 
 
 To learn how to use this template:
