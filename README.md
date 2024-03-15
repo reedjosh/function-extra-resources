@@ -3,7 +3,7 @@
 
 A function for selectiong generic resources via [composition function][functions]s in [Go][go].
 
-** just a fork of the function template ATM **
+**just a fork of the function template ATM**
 
 ...
 ...
