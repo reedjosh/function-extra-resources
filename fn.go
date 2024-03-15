@@ -8,7 +8,7 @@ import (
 	fnv1beta1 "github.com/crossplane/function-sdk-go/proto/v1beta1"
 	"github.com/crossplane/function-sdk-go/request"
 	"github.com/crossplane/function-sdk-go/response"
-	"github.com/crossplane/function-template-go/input/v1beta1"
+	"github.com/crossplane/function-generic-resources/input/v1beta1"
 )
 
 // Function returns whatever response you ask it to.

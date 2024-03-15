@@ -1,0 +1,44 @@
+# ---
+# apiVersion: apiextensions.crossplane.io/v1alpha1
+# kind: EnvironmentConfig
+# metadata:
+#   name: example-config
+#   labels:
+#     type: cluster
+#     metaName: josh
+# data:
+#   complex:
+#     a: b
+#     c:
+#       d: e
+#       f: "1"
+# ---
+apiVersion: apiextensions.crossplane.io/v1alpha1
+kind: EnvironmentConfig
+metadata:
+  name: josh-x1
+  labels:
+    type: cluster
+    metaName: josh
+data:
+  josh-x1:
+    cluster:
+      a: b
+      c:
+        d: e
+        f: "1"
+---
+apiVersion: apiextensions.crossplane.io/v1alpha1
+kind: EnvironmentConfig
+metadata:
+  name: josh-y1
+  labels:
+    type: cluster
+    metaName: josh
+data:
+  josh-y1:
+    cluster:
+      a: b
+      c:
+        d: e
+        f: "1"
