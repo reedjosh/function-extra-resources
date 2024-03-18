@@ -1,7 +1,7 @@
-# function-generic-resources
+# function-extra-resources
 [![CI](https://github.com/crossplane/function-template-go/actions/workflows/ci.yml/badge.svg)](https://github.com/crossplane/function-template-go/actions/workflows/ci.yml)
 
-A function for selecting generic resources via [composition function][functions]s in [Go][go].
+A function for selecting extra resources via [composition function][functions]s in [Go][go].
 
 **just a fork of the function template ATM**
 

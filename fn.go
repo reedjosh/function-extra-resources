@@ -4,17 +4,15 @@ import (
 	"context"
 	"fmt"
 
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-
 	"github.com/TylerBrock/colorjson"
+
 	"github.com/crossplane/crossplane-runtime/pkg/errors"
 	"github.com/crossplane/crossplane-runtime/pkg/logging"
+	"github.com/crossplane/function-extra-resources/input/v1beta1"
 	fnv1beta1 "github.com/crossplane/function-sdk-go/proto/v1beta1"
 	"github.com/crossplane/function-sdk-go/request"
 	"github.com/crossplane/function-sdk-go/resource"
 	"github.com/crossplane/function-sdk-go/response"
-
-	"github.com/crossplane/function-generic-resources/input/v1beta1"
 )
 
 // Function returns whatever response you ask it to.
@@ -28,21 +26,13 @@ type Function struct {
 func (f *Function) RunFunction(_ context.Context, req *fnv1beta1.RunFunctionRequest) (*fnv1beta1.RunFunctionResponse, error) {
 	f.log.Info("Running function", "tag", req.GetMeta().GetTag())
 
-	apiVer := "apiextensions.crossplane.io"
-	kind := "environment"
-	selector := fmt.Sprintf("%s/%s", apiVer, kind)
-
 	rsp := response.To(req, response.DefaultTTL)
 
 	in := &v1beta1.Input{}
 	if err := request.GetInput(req, in); err != nil {
-		response.Fatal(rsp, errors.Wrapf(err, "cannot get Function input from %T", req))
-		return rsp, nil
+	    response.Fatal(rsp, errors.Wrapf(err, "cannot get Function input from %T", req))
+	    return rsp, nil
 	}
-
-	// TODO: Add your Function logic here!
-	response.Normalf(rsp, "I was run with input %q!", in.Example)
-	f.log.Info("I was run!", "input", in.Example)
 
 	// // Get function input.
 	// in := &v1beta1.Input{}
@@ -66,14 +56,6 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1beta1.RunFunctionRequ
 		return rsp, nil
 	}
 
-	// // Note(phisco): We need to compute the selectors even if we already
-	// // requested them at the previous iteration.
-	// requirements, err := buildRequirements(in, oxr)
-	// if err != nil {
-	//     response.Fatal(rsp, errors.Wrapf(err, "cannot build requirements"))
-	//     return rsp, nil
-	// }
-	//
 	requirements, _ := buildRequirements(in, oxr)
 
 	rsp.Requirements = requirements
@@ -84,17 +66,6 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1beta1.RunFunctionRequ
 		return rsp, nil
 	}
 
-	// Create unstructured object and fetch extra resource into it.
-	var inputEnv *unstructured.Unstructured
-	if v, ok := request.GetContextKey(req, selector); ok {
-		inputEnv = &unstructured.Unstructured{}
-		if err := resource.AsObject(v.GetStructValue(), inputEnv); err != nil {
-			response.Fatal(rsp, errors.Wrapf(err, "cannot get Composition environment from %T context key %q", req, selector))
-			return rsp, nil
-		}
-		f.log.Debug("Loaded Composition environment from Function context", "context-key", selector)
-	}
-
 	extraResources, err := request.GetExtraResources(req)
 	if err != nil {
 		response.Fatal(rsp, errors.Wrapf(err, "cannot get Function input from %T", req))
@@ -102,13 +73,12 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1beta1.RunFunctionRequ
 	}
 
 	fmt.Println(requirements)
-	fmt.Println(inputEnv)
 	myObj := extraResources["myResource"][0].Resource.Object
+
+	// Marshall the Colorized JSON
 	// Make a custom formatter with indent set
 	formatter := colorjson.NewFormatter()
 	formatter.Indent = 4
-
-	// Marshall the Colorized JSON
 	s, _ := formatter.Marshal(myObj)
 	fmt.Println(string(s))
 
@@ -121,8 +91,10 @@ func buildRequirements(_ *v1beta1.Input, _ *resource.Composite) (*fnv1beta1.Requ
 	extraResources := make(map[string]*fnv1beta1.ResourceSelector, 1) // Define length by input later.
 	matchLabels := map[string]string{"type": "cluster"}
 	extraResources["myResource"] = &fnv1beta1.ResourceSelector{
-		ApiVersion: "apiextensions.crossplane.io/v1alpha1",
-		Kind:       "EnvironmentConfig",
+		// ApiVersion: "apiextensions.crossplane.io/v1alpha1",
+		// Kind:       "EnvironmentConfig",
+		ApiVersion: "aws.platform.ripe.com/v1alpha1",
+		Kind:       "CompositeCluster",
 		Match: &fnv1beta1.ResourceSelector_MatchLabels{
 			MatchLabels: &fnv1beta1.MatchLabels{Labels: matchLabels},
 		},

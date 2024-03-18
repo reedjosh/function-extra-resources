@@ -31,15 +31,15 @@ linters-settings:
     # simplify code: gofmt with `-s` option, true by default
     simplify: true
 
-  gci:
-    custom-order: true
-    sections:
-      - standard
-      - default
-      - prefix(github.com/crossplane)
-      - prefix(github.com/crossplane-contrib)
-      - blank
-      - dot
+  # gci:
+  #   custom-order: true
+  #   sections:
+  #     - standard
+  #     - default
+  #     - prefix(github.com/crossplane)
+  #     - prefix(github.com/crossplane-contrib)
+  #     - blank
+  #     - dot
 
   gocyclo:
     # minimal code complexity to report, 30 by default (but we recommend 10-20)

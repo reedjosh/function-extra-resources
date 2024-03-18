@@ -1,17 +1,48 @@
 apiVersion: apiextensions.crossplane.io/v1
 kind: Composition
 metadata:
-  name: function-generic-resources
+  name: function-environment-configs
 spec:
   compositeTypeRef:
     apiVersion: example.crossplane.io/v1
     kind: XR
   mode: Pipeline
   pipeline:
-  - step: run-the-template
+  - step: environmentConfigs
     functionRef:
-      name: function-generic-resources
+      name: function-extra-resources
     input:
-      apiVersion: template.fn.crossplane.io/v1beta1
+      apiVersion: extraresources.fn.crossplane.io/v1beta1
       kind: Input
-      example: "Hello world"
+      spec:
+        extraResources:
+          - kind: EnvironmentConfigs
+            apiVersion: apiextensions.crossplane.io/v1alpha1
+            type: Selector
+            selector:
+              mode: Multiple
+              maxMatch: 2
+              minMatch: 1
+              matchLabels:
+                - key: type
+                  type: Value
+                  value: cluster
+  - step: go-templating
+    #{{ index .context "apiextensions.crossplane.io/environment" "complex" "c" "d" }}
+    functionRef:
+      name: function-go-templating
+    input:
+      apiVersion: gotemplating.fn.crossplane.io/v1beta1
+      kind: GoTemplate
+      source: Inline
+      inline:
+        template: |
+          ---
+          apiVersion: example.crossplane.io/v1
+          kind: XR
+          status:
+            fromEnv: |
+              asdf
+              {{range $k, $v := (index .context "apiextensions.crossplane.io/environment")}}
+                Key: {{$k}}, Value: {{$v}}
+              {{end}}`
