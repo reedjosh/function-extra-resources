@@ -60,6 +60,10 @@ spec:
                       description: APIVersion is the kubernetes API Version of the
                         target extra resource(s).
                       type: string
+                    into:
+                      description: Into is the key into which extra resources for
+                        this selector will be placed.
+                      type: string
                     kind:
                       description: Kind is the kubernetes kind of the target extra
                         resource(s).
@@ -155,6 +159,8 @@ spec:
                       - Reference
                       - Selector
                       type: string
+                  required:
+                  - into
                   type: object
                 type: array
               policy:

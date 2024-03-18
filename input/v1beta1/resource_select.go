@@ -84,6 +84,9 @@ type ResourceSource struct {
 
 	// APIVersion is the kubernetes API Version of the target extra resource(s).
 	APIVersion string `json:"apiVersion,omitempty"`
+
+	// Into is the key into which extra resources for this selector will be placed.
+	Into string `json:"into"`
 }
 
 // GetType returns the type of the resource source, returning the default if not set.

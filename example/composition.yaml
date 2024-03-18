@@ -17,7 +17,20 @@ spec:
       spec:
         extraResources:
           - kind: EnvironmentConfig
+            into: envConfs
             apiVersion: apiextensions.crossplane.io/v1alpha1
+            type: Selector
+            selector:
+              mode: Multiple
+              maxMatch: 2
+              minMatch: 1
+              matchLabels:
+                - key: type
+                  type: Value
+                  value: cluster
+          - kind: CompositeCluster
+            into: cc
+            apiVersion: aws.platform.ripe.com/v1alpha1
             type: Selector
             selector:
               mode: Multiple
