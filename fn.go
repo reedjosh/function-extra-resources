@@ -28,25 +28,13 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1beta1.RunFunctionRequ
 
 	rsp := response.To(req, response.DefaultTTL)
 
+	// Get function input.
 	in := &v1beta1.Input{}
 	if err := request.GetInput(req, in); err != nil {
 	    response.Fatal(rsp, errors.Wrapf(err, "cannot get Function input from %T", req))
 	    return rsp, nil
 	}
 
-	// // Get function input.
-	// in := &v1beta1.Input{}
-	// if err := request.GetInput(req, in); err != nil {
-	//     response.Fatal(rsp, errors.Wrapf(err, "cannot get Function input from %T", req))
-	//     return rsp, nil
-	// }
-	//
-
-	// // Exit if nothing requested.
-	// if in.Spec.EnvironmentConfigs == nil {
-	//     f.log.Debug("No EnvironmentConfigs specified, exiting")
-	//     return rsp, nil
-	// }
 
 	// I think this means get the parent resorucs of the function pipeline, but need to verify.
 	// May mean get output XR the pipeline targets.
@@ -61,6 +49,8 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1beta1.RunFunctionRequ
 	rsp.Requirements = requirements
 
 	// Verify that extra resources were even requested in input.
+	// Appears 100% needed.
+	// Still not sure why. This condition should only happen on a bad request.
 	if req.ExtraResources == nil {
 		f.log.Debug("No extra resources specified, exiting", "requirements", rsp.GetRequirements())
 		return rsp, nil
@@ -87,14 +77,12 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1beta1.RunFunctionRequ
 
 // Build requirements takes input and outputs an array of external resoruce requirements to request
 // from Crossplane's external resource API.
-func buildRequirements(_ *v1beta1.Input, _ *resource.Composite) (*fnv1beta1.Requirements, error) {
+func buildRequirements(in *v1beta1.Input, _ *resource.Composite) (*fnv1beta1.Requirements, error) {
 	extraResources := make(map[string]*fnv1beta1.ResourceSelector, 1) // Define length by input later.
 	matchLabels := map[string]string{"type": "cluster"}
 	extraResources["myResource"] = &fnv1beta1.ResourceSelector{
-		// ApiVersion: "apiextensions.crossplane.io/v1alpha1",
-		// Kind:       "EnvironmentConfig",
-		ApiVersion: "aws.platform.ripe.com/v1alpha1",
-		Kind:       "CompositeCluster",
+		ApiVersion: in.Spec.ExtraResources[0].APIVersion,
+		Kind:       in.Spec.ExtraResources[0].Kind,
 		Match: &fnv1beta1.ResourceSelector_MatchLabels{
 			MatchLabels: &fnv1beta1.MatchLabels{Labels: matchLabels},
 		},

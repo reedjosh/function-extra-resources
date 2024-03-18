@@ -16,7 +16,7 @@ spec:
       kind: Input
       spec:
         extraResources:
-          - kind: EnvironmentConfigs
+          - kind: EnvironmentConfig
             apiVersion: apiextensions.crossplane.io/v1alpha1
             type: Selector
             selector:
