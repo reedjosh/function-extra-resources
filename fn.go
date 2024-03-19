@@ -149,7 +149,8 @@ func buildRequirements(in *v1beta1.Input, xr *resource.Composite) (*fnv1beta1.Re
 }
 
 // Verify Min/Max and sort extra resources by field path within a single kind.
-func verifyAndSortExtras(in *v1beta1.Input, extraResources map[string][]resource.Extra,
+func verifyAndSortExtras(
+	in *v1beta1.Input, extraResources map[string][]resource.Extra,
 ) (cleanedExtras map[string][]unstructured.Unstructured, err error) {
 	cleanedExtras = make(map[string][]unstructured.Unstructured)
 	for _, extraResource := range in.Spec.ExtraResources {
@@ -169,20 +170,31 @@ func verifyAndSortExtras(in *v1beta1.Input, extraResources map[string][]resource
 			cleanedExtras[extraResName] = append(cleanedExtras[extraResName], *resources[0].Resource)
 
 		case v1beta1.ResourceSourceTypeSelector:
-			selector := extraResource.Selector
-			if selector.MinMatch != nil && len(resources) < int(*selector.MinMatch) {
-				return nil, errors.Errorf("expected at least %d extra resources %q, got %d", *selector.MinMatch, extraResName, len(resources))
-			}
-			if err := sortExtrasByFieldPath(resources, selector.GetSortByFieldPath()); err != nil {
-				return nil, err
-			}
-			if selector.MaxMatch != nil && len(resources) > int(*selector.MaxMatch) {
-				resources = resources[:*selector.MaxMatch]
-			}
-			for _, r := range resources {
-				cleanedExtras[extraResName] = append(cleanedExtras[extraResName], *r.Resource)
-			}
+			return verifyAndSortSelectorExtras(extraResource, resources)
 		}
+	}
+	return cleanedExtras, nil
+}
+
+// verifyAndSortSelectorExtras verifies min/max of extraResources selected instead of referenced.
+// It's somewhat complicated, so easier to see in its own function.
+func verifyAndSortSelectorExtras(
+	extraResource v1beta1.ResourceSource, resources []resource.Extra,
+) (cleanedExtras map[string][]unstructured.Unstructured, err error) {
+	cleanedExtras = make(map[string][]unstructured.Unstructured)
+	extraResName := extraResource.Into
+	selector := extraResource.Selector
+	if selector.MinMatch != nil && len(resources) < int(*selector.MinMatch) {
+		return nil, errors.Errorf("expected at least %d extra resources %q, got %d", *selector.MinMatch, extraResName, len(resources))
+	}
+	if err := sortExtrasByFieldPath(resources, selector.GetSortByFieldPath()); err != nil {
+		return nil, err
+	}
+	if selector.MaxMatch != nil && len(resources) > int(*selector.MaxMatch) {
+		resources = resources[:*selector.MaxMatch]
+	}
+	for _, r := range resources {
+		cleanedExtras[extraResName] = append(cleanedExtras[extraResName], *r.Resource)
 	}
 	return cleanedExtras, nil
 }
