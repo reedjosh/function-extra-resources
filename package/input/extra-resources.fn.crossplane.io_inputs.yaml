@@ -46,15 +46,8 @@ spec:
                   ExtraResources selects a list of `ExtraResource`s. The resolved
                   resources are stored in the composite resource at
                   `spec.extraResourceRefs` and is only updated if it is null.
-
-
-                  The list of references is used to compute an in-memory resource at compose time.
-
-
-                  The computed resource can be accessed in a composition using ... TODO
-                  `FromResourceFieldPath` and `CombineFromResource` patches.
                 items:
-                  description: ResourceSource selects a ExtraResource resource.
+                  description: ResourceSource selects a ExtraResource.
                   properties:
                     apiVersion:
                       description: APIVersion is the kubernetes API Version of the
@@ -136,14 +129,6 @@ spec:
                             extracted ExtraResources in Multiple mode.
                           format: int64
                           type: integer
-                        mode:
-                          default: Single
-                          description: 'Mode specifies retrieval strategy: "Single"
-                            or "Multiple".'
-                          enum:
-                          - Single
-                          - Multiple
-                          type: string
                         sortByFieldPath:
                           default: metadata.name
                           description: SortByFieldPath is the path to the field based
@@ -190,6 +175,8 @@ spec:
                     - IfNotPresent
                     type: string
                 type: object
+            required:
+            - extraResources
             type: object
         type: object
     served: true

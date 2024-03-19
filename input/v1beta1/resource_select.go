@@ -25,13 +25,7 @@ type InputSpec struct {
 	// ExtraResources selects a list of `ExtraResource`s. The resolved
 	// resources are stored in the composite resource at
 	// `spec.extraResourceRefs` and is only updated if it is null.
-	//
-	// The list of references is used to compute an in-memory resource at compose time.
-	//
-	// The computed resource can be accessed in a composition using ... TODO
-	// `FromResourceFieldPath` and `CombineFromResource` patches.
-	// +optional
-	ExtraResources []ResourceSource `json:"extraResources,omitempty"`
+	ExtraResources []ResourceSource `json:"extraResources"`
 
 	// Policy represents the Resolve and Resolution policies which apply to
 	// all ResourceSourceReferences in ExtraResources list.
@@ -61,7 +55,7 @@ const (
 	ResourceSourceTypeSelector ResourceSourceType = "Selector"
 )
 
-// ResourceSource selects a ExtraResource resource.
+// ResourceSource selects a ExtraResource.
 type ResourceSource struct {
 	// Type specifies the way the ExtraResource is selected.
 	// Default is `Reference`
@@ -103,25 +97,11 @@ type ResourceSourceReference struct {
 	Name string `json:"name"`
 }
 
-// ResourceSourceSelectorModeType specifies amount of retrieved ExtraResources
-// with matching label.
+// ResourceSourceSelectorModeType specifies amount of retrieved ExtraResources with matching label.
 type ResourceSourceSelectorModeType string
-
-const (
-	// ResourceSourceSelectorSingleMode extracts only first ExtraResource from the sorted list.
-	ResourceSourceSelectorSingleMode ResourceSourceSelectorModeType = "Single"
-
-	// ResourceSourceSelectorMultiMode extracts multiple ExtraResources from the sorted list.
-	ResourceSourceSelectorMultiMode ResourceSourceSelectorModeType = "Multiple"
-)
 
 // An ResourceSourceSelector selects an ExtraResource via labels.
 type ResourceSourceSelector struct {
-	// Mode specifies retrieval strategy: "Single" or "Multiple".
-	// +kubebuilder:validation:Enum=Single;Multiple
-	// +kubebuilder:default=Single
-	Mode ResourceSourceSelectorModeType `json:"mode,omitempty"`
-
 	// MaxMatch specifies the number of extracted ExtraResources in Multiple mode, extracts all if nil.
 	MaxMatch *uint64 `json:"maxMatch,omitempty"`
 
@@ -136,13 +116,7 @@ type ResourceSourceSelector struct {
 	MatchLabels []ResourceSourceSelectorLabelMatcher `json:"matchLabels,omitempty"`
 }
 
-func (e *ResourceSourceSelector) GetMode() ResourceSourceSelectorModeType {
-	if e == nil || e.Mode == "" {
-		return ResourceSourceSelectorSingleMode
-	}
-	return e.Mode
-}
-
+// GetSortByFieldPath returns the sort by path if set or a sane default.
 func (e *ResourceSourceSelector) GetSortByFieldPath() string {
 	if e == nil || e.SortByFieldPath == "" {
 		return "metadata.name"
@@ -150,8 +124,7 @@ func (e *ResourceSourceSelector) GetSortByFieldPath() string {
 	return e.SortByFieldPath
 }
 
-// ResourceSourceSelectorLabelMatcherType specifies where the value for a
-// label comes from.
+// ResourceSourceSelectorLabelMatcherType specifies where the value for a label comes from.
 type ResourceSourceSelectorLabelMatcherType string
 
 const (
