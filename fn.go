@@ -13,12 +13,11 @@ import (
 	"github.com/crossplane/crossplane-runtime/pkg/errors"
 	"github.com/crossplane/crossplane-runtime/pkg/fieldpath"
 	"github.com/crossplane/crossplane-runtime/pkg/logging"
+	"github.com/crossplane/function-extra-resources/input/v1beta1"
 	fnv1beta1 "github.com/crossplane/function-sdk-go/proto/v1beta1"
 	"github.com/crossplane/function-sdk-go/request"
 	"github.com/crossplane/function-sdk-go/resource"
 	"github.com/crossplane/function-sdk-go/response"
-
-	"github.com/crossplane/function-extra-resources/input/v1beta1"
 )
 
 // Key to retrieve extras at.
@@ -77,7 +76,12 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1beta1.RunFunctionRequ
 		return rsp, nil
 	}
 
+	// Sort and verify min/max selected.
+	// Sorting is required for determinism.
 	verifiedExtras, err := verifyAndSortExtras(in, extraResources)
+	if err != nil {
+		return nil, errors.Wrapf(err, "sorting and verifying results")
+	}
 
 	// For now cheaply convert to JSON for serializing.
 	// TODO: look into resources.AsStruct or simlar since unsturctured k8s objects are already almost json.
@@ -145,7 +149,7 @@ func buildRequirements(in *v1beta1.Input, xr *resource.Composite) (*fnv1beta1.Re
 }
 
 // Verify Min/Max and sort extra resources by field path within a single kind.
-func verifyAndSortExtras( in *v1beta1.Input, extraResources map[string][]resource.Extra,
+func verifyAndSortExtras(in *v1beta1.Input, extraResources map[string][]resource.Extra,
 ) (cleanedExtras map[string][]unstructured.Unstructured, err error) {
 	cleanedExtras = make(map[string][]unstructured.Unstructured)
 	for _, extraResource := range in.Spec.ExtraResources {
