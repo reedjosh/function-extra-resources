@@ -5,70 +5,15 @@ A function for selecting extra resources via [composition function][functions]s 
 
 **just a fork of the function template ATM**
 
-...
-
-...
-
-
 # Local dev.
 
-For now I'm just using air.
+Use air to iterate quickly.
 
-I run `~/go/bin/air -- --insecure --debug --address localhost:9443`.
+run `~/go/bin/air -- --insecure --debug --address localhost:9443`.
 
-In this manner I get autoreload.
+To start this server process
 
-I then run `./run.sh` to run the function.
-
-
-
-..
-
-..
-
-..
-
-..
-
-..
-
-..
-
-..
-Below here are just template generated docs.
-..
-
-..
-
-..
-
-..
-
-..
-
-..
-
-..
-
-
-To learn how to use this template:
-
-* [Follow the guide to writing a composition function in Go][function guide]
-* [Learn about how composition functions work][functions]
-* [Read the function-sdk-go package documentation][package docs]
-
-If you just want to jump in and get started:
-
-1. Replace `function-template-go` with your function in `go.mod`,
-   `package/crossplane.yaml`, and any Go imports. (You can also do this
-   automatically by running the `./init.sh <function-name>` script.)
-1. Update `input/v1beta1/` to reflect your desired input (and run `go generate`)
-1. Add your logic to `RunFunction` in `fn.go`
-1. Add tests for your logic in `fn_test.go`
-1. Update this file, `README.md`, to be about your function!
-
-This template uses [Go][go], [Docker][docker], and the [Crossplane CLI][cli] to
-build functions.
+Then run `./run.sh` to run a function-extra-resources example.
 
 ```shell
 # Run code generation - see input/generate.go
