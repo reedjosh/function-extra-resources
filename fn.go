@@ -22,7 +22,7 @@ import (
 
 // Key to retrieve extras at.
 const (
-	FunctionContextKeyExtras = "apiextensions.crossplane.io/extraResources"
+	FunctionContextKeyExtraResources = "apiextensions.crossplane.io/extraResources"
 )
 
 // Function returns whatever response you ask it to.
@@ -41,7 +41,7 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1beta1.RunFunctionRequ
 	// Get function input.
 	in := &v1beta1.Input{}
 	if err := request.GetInput(req, in); err != nil {
-		response.Fatal(rsp, errors.Wrapf(err, "cannot get Function input from %T", req))
+		response.Fatal(rsp, errors.Errorf("cannot get Function input from %T: %w", req, err))
 		return rsp, nil
 	}
 
@@ -51,7 +51,6 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1beta1.RunFunctionRequ
 		response.Fatal(rsp, errors.Wrapf(err, "cannot get observed composite resource"))
 		return rsp, nil
 	}
-	f.log.Debug("asdf", "bsdf", oxr)
 
 	// Build extraResource Requests.
 	requirements, err := buildRequirements(in, oxr)
@@ -61,15 +60,16 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1beta1.RunFunctionRequ
 	}
 	rsp.Requirements = requirements
 
-	// Verify that extra resources were even requested in input.
-	// Appears 100% needed.
-	// Still not sure why. This condition should only happen on a bad request.
+	// The request response flow is such that we may or may not have even requested extra resources already.
+	// This may be a request for reconciliation after requesting extra resources or it may not be.
+	// If no extra resources are present, it's likely they've not been requested yet.
+	// So, respond with an extra resource request and no err.
 	if req.ExtraResources == nil {
 		f.log.Debug("No extra resources specified, exiting", "requirements", rsp.GetRequirements())
 		return rsp, nil
 	}
 
-	// Actually fetch extra resources vie gRPC to Crossplane.
+	// Get extra resources from request.
 	extraResources, err := request.GetExtraResources(req)
 	if err != nil {
 		response.Fatal(rsp, errors.Wrapf(err, "fetching extra resources %T", req))
@@ -95,7 +95,7 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1beta1.RunFunctionRequ
 		response.Fatal(rsp, errors.Wrapf(err, "cannot unmarshal JSON from %T into %T", extraResources, s))
 		return rsp, nil
 	}
-	response.SetContextKey(rsp, FunctionContextKeyExtras, structpb.NewStructValue(s))
+	response.SetContextKey(rsp, FunctionContextKeyExtraResources, structpb.NewStructValue(s))
 
 	return rsp, nil
 }
@@ -149,8 +149,7 @@ func buildRequirements(in *v1beta1.Input, xr *resource.Composite) (*fnv1beta1.Re
 }
 
 // Verify Min/Max and sort extra resources by field path within a single kind.
-func verifyAndSortExtras(
-	in *v1beta1.Input, extraResources map[string][]resource.Extra,
+func verifyAndSortExtras(in *v1beta1.Input, extraResources map[string][]resource.Extra, //nolint:gocyclo // TODO(reedjosh): refactor
 ) (cleanedExtras map[string][]unstructured.Unstructured, err error) {
 	cleanedExtras = make(map[string][]unstructured.Unstructured)
 	for _, extraResource := range in.Spec.ExtraResources {
@@ -170,31 +169,20 @@ func verifyAndSortExtras(
 			cleanedExtras[extraResName] = append(cleanedExtras[extraResName], *resources[0].Resource)
 
 		case v1beta1.ResourceSourceTypeSelector:
-			return verifyAndSortSelectorExtras(extraResource, resources)
+			selector := extraResource.Selector
+			if selector.MinMatch != nil && len(resources) < int(*selector.MinMatch) {
+				return nil, errors.Errorf("expected at least %d extra resources %q, got %d", *selector.MinMatch, extraResName, len(resources))
+			}
+			if err := sortExtrasByFieldPath(resources, selector.GetSortByFieldPath()); err != nil {
+				return nil, err
+			}
+			if selector.MaxMatch != nil && len(resources) > int(*selector.MaxMatch) {
+				resources = resources[:*selector.MaxMatch]
+			}
+			for _, r := range resources {
+				cleanedExtras[extraResName] = append(cleanedExtras[extraResName], *r.Resource)
+			}
 		}
-	}
-	return cleanedExtras, nil
-}
-
-// verifyAndSortSelectorExtras verifies min/max of extraResources selected instead of referenced.
-// It's somewhat complicated, so easier to see in its own function.
-func verifyAndSortSelectorExtras(
-	extraResource v1beta1.ResourceSource, resources []resource.Extra,
-) (cleanedExtras map[string][]unstructured.Unstructured, err error) {
-	cleanedExtras = make(map[string][]unstructured.Unstructured)
-	extraResName := extraResource.Into
-	selector := extraResource.Selector
-	if selector.MinMatch != nil && len(resources) < int(*selector.MinMatch) {
-		return nil, errors.Errorf("expected at least %d extra resources %q, got %d", *selector.MinMatch, extraResName, len(resources))
-	}
-	if err := sortExtrasByFieldPath(resources, selector.GetSortByFieldPath()); err != nil {
-		return nil, err
-	}
-	if selector.MaxMatch != nil && len(resources) > int(*selector.MaxMatch) {
-		resources = resources[:*selector.MaxMatch]
-	}
-	for _, r := range resources {
-		cleanedExtras[extraResName] = append(cleanedExtras[extraResName], *r.Resource)
 	}
 	return cleanedExtras, nil
 }
