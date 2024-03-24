@@ -12,7 +12,7 @@ spec:
     functionRef:
       name: function-extra-resources
     input:
-      apiVersion: extraresources.fn.crossplane.io/v1beta1
+      apiVersion: extra-resources.fn.crossplane.io/v1beta1
       kind: Input
       spec:
         extraResources:
