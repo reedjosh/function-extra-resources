@@ -8,7 +8,7 @@ spec:
     kind: XR
   mode: Pipeline
   pipeline:
-  - step: environmentConfigs
+  - step: pull-extra-resources
     functionRef:
       name: function-extra-resources
     input:
@@ -47,7 +47,7 @@ spec:
       source: Inline
       inline:
         template: |
-            {{- $XClusters := index (index .context "apiextensions.crossplane.io/extraResources") "XCluster" }}
+            {{- $XClusters := index (index .context "apiextensions.crossplane.io/extra-resources") "XCluster" }}
             {{- range $i, $A := $XClusters }}
             ---
             apiVersion: vault.upbound.io/v1beta1
