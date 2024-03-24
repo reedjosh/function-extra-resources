@@ -61,10 +61,10 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1beta1.RunFunctionRequ
 	rsp.Requirements = requirements
 
 	// The request response cycle for the Crossplane ExtraResources API requires that function-extra-resources
-	// tells Crossplane what it wants. 
+	// tells Crossplane what it wants.
 	// Then a new rquest is sent to function-extra-resources with those resources present at the ExtraResources field.
-	// 
-	// function-extra-resources does not know if it has requested the resources already or not. 
+	//
+	// function-extra-resources does not know if it has requested the resources already or not.
 	//
 	// If it has and these resources are now present, proceed with verification and conversion.
 	if req.ExtraResources == nil {
@@ -89,10 +89,10 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1beta1.RunFunctionRequ
 	// For now cheaply convert to JSON for serializing.
 	//
 	// TODO(reedjosh): look into resources.AsStruct or simlar since unsturctured k8s objects are already almost json.
-	//    structpb.NewList(v []interface{}) should create an array like. 
+	//    structpb.NewList(v []interface{}) should create an array like.
 	//    Combining this and similar structures from the structpb lib should should be done to create
 	//    a map[string][object] container into which the found extra resources can be dumped.
-	//    
+	//
 	//    The found extra resources should then be directly marhsal-able via:
 	//    obj := &unstructured.Unstructured{}
 	//    obj.MarshalJSON()
@@ -104,7 +104,7 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1beta1.RunFunctionRequ
 	s := &structpb.Struct{}
 	err = protojson.Unmarshal(b, s)
 	if err != nil {
-		response.Fatal(rsp, errors.Errorf("cannot unmarshal %T into %T: %w", extraResources, s,  err))
+		response.Fatal(rsp, errors.Errorf("cannot unmarshal %T into %T: %w", extraResources, s, err))
 		return rsp, nil
 	}
 	response.SetContextKey(rsp, FunctionContextKeyExtraResources, structpb.NewStructValue(s))
