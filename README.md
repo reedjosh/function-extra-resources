@@ -3,17 +3,103 @@
 
 A function for selecting extra resources via [composition function][functions]s in [Go][go].
 
-**just a fork of the function template ATM**
+## Using `function-extra-resources`
 
-# Local dev.
+Please see the example in `./examples`
 
-Use air to iterate quickly.
+`function-extra-resources` is generally most useful in tandem with a function that can reference the many resources like
+`function-go-templating`.
 
-run `~/go/bin/air -- --insecure --debug --address localhost:9443`.
+### Creating objects from other's found in the local cluster.
+``` yaml
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: function-environment-configs
+spec:
+  compositeTypeRef:
+    apiVersion: example.crossplane.io/v1
+    kind: XR
+  mode: Pipeline
+  pipeline:
+  - step: environmentConfigs
+    functionRef:
+      name: function-extra-resources
+    input:
+      apiVersion: extraresources.fn.crossplane.io/v1beta1
+      kind: Input
+      spec:
+        extraResources:
+          - kind: XCluster
+            into: XCluster
+            apiVersion: example.crossplane.io/v1
+            type: Selector
+            selector:
+              maxMatch: 2
+              minMatch: 1
+              matchLabels:
+                - key: type
+                  type: Value
+                  value: cluster
+  - step: go-templating
+    functionRef:
+      name: function-go-templating
+    input:
+      apiVersion: gotemplating.fn.crossplane.io/v1beta1
+      kind: GoTemplate
+      source: Inline
+      inline:
+        template: |
+            {{- $XClusters := index (index .context "apiextensions.crossplane.io/extra-resources") "XCluster" }}
+            {{- range $i, $A := $XClusters }}
+            ---
+            apiVersion: vault.upbound.io/v1beta1
+            kind: VaultRole
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: {{index (index $A "metadata") "name"}}
+            spec:
+              forProvider:
+            {{- end}}
+```
 
-To start this server process
 
-Then run `./run.sh` to run a function-extra-resources example.
+## Installing the `function-extra-resources` Function into a Cluster
+
+``` shell
+cat <<EOF | kubectl apply -f -
+apiVersion: pkg.crossplane.io/v1beta1
+kind: Function
+metadata:
+  name: function-extra-resources
+spec:
+  package: xpkg.upbound.io/crossplane-contrib/function-extra-resources:latest
+EOF
+```
+
+## Local dev.
+
+### Air
+
+`air` is not strictly necessary, but helpful.
+
+Installing [air](https://github.com/cosmtrek/air) allows quick iterative local development.
+
+`air` is a live reloader that watches for local file changes.
+
+Once installed, running
+
+`air -- --insecure --debug --address localhost:9443`.
+
+Shoud get the function process/server build and running to serve CLI function requests.
+
+### After locally serving function-extra-resources
+
+`./run.sh` will use the crossplane CLI to run our basic example in `./examples`
+
+### Crossplnae Function basics.
+
+This function uses [Go][go], [Docker][docker], and the [Crossplane CLI][cli].
 
 ```shell
 # Run code generation - see input/generate.go

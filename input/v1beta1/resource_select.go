@@ -97,9 +97,6 @@ type ResourceSourceReference struct {
 	Name string `json:"name"`
 }
 
-// ResourceSourceSelectorModeType specifies amount of retrieved ExtraResources with matching label.
-type ResourceSourceSelectorModeType string
-
 // An ResourceSourceSelector selects an ExtraResource via labels.
 type ResourceSourceSelector struct {
 	// MaxMatch specifies the number of extracted ExtraResources in Multiple mode, extracts all if nil.

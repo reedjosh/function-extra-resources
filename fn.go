@@ -22,7 +22,7 @@ import (
 
 // Key to retrieve extras at.
 const (
-	FunctionContextKeyExtraResources = "apiextensions.crossplane.io/extraResources"
+	FunctionContextKeyExtraResources = "apiextensions.crossplane.io/extra-resources"
 )
 
 // Function returns whatever response you ask it to.
@@ -48,31 +48,34 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1beta1.RunFunctionRequ
 	// Get XR the pipeline targets.
 	oxr, err := request.GetObservedCompositeResource(req)
 	if err != nil {
-		response.Fatal(rsp, errors.Wrapf(err, "cannot get observed composite resource"))
+		response.Fatal(rsp, errors.Errorf("cannot get observed composite resource: %w", err))
 		return rsp, nil
 	}
 
 	// Build extraResource Requests.
 	requirements, err := buildRequirements(in, oxr)
 	if err != nil {
-		response.Fatal(rsp, errors.Wrapf(err, "could not build extraResource requirements"))
+		response.Fatal(rsp, errors.Errorf("could not build extra resource requirements: %w", err))
 		return rsp, nil
 	}
 	rsp.Requirements = requirements
 
-	// The request response flow is such that we may or may not have even requested extra resources already.
-	// This may be a request for reconciliation after requesting extra resources or it may not be.
-	// If no extra resources are present, it's likely they've not been requested yet.
-	// So, respond with an extra resource request and no err.
+	// The request response cycle for the Crossplane ExtraResources API requires that function-extra-resources
+	// tells Crossplane what it wants. 
+	// Then a new rquest is sent to function-extra-resources with those resources present at the ExtraResources field.
+	// 
+	// function-extra-resources does not know if it has requested the resources already or not. 
+	//
+	// If it has and these resources are now present, proceed with verification and conversion.
 	if req.ExtraResources == nil {
-		f.log.Debug("No extra resources specified, exiting", "requirements", rsp.GetRequirements())
+		f.log.Debug("No extra resources present, exiting", "requirements", rsp.GetRequirements())
 		return rsp, nil
 	}
 
-	// Get extra resources from request.
+	// Pull extra resources from the ExtraResources request field.
 	extraResources, err := request.GetExtraResources(req)
 	if err != nil {
-		response.Fatal(rsp, errors.Wrapf(err, "fetching extra resources %T", req))
+		response.Fatal(rsp, errors.Errorf("fetching extra resources %T: %w", req, err))
 		return rsp, nil
 	}
 
@@ -84,15 +87,24 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1beta1.RunFunctionRequ
 	}
 
 	// For now cheaply convert to JSON for serializing.
-	// TODO: look into resources.AsStruct or simlar since unsturctured k8s objects are already almost json.
+	//
+	// TODO(reedjosh): look into resources.AsStruct or simlar since unsturctured k8s objects are already almost json.
+	//    structpb.NewList(v []interface{}) should create an array like. 
+	//    Combining this and similar structures from the structpb lib should should be done to create
+	//    a map[string][object] container into which the found extra resources can be dumped.
+	//    
+	//    The found extra resources should then be directly marhsal-able via:
+	//    obj := &unstructured.Unstructured{}
+	//    obj.MarshalJSON()
 	b, err := json.Marshal(verifiedExtras)
 	if err != nil {
-		return nil, errors.Wrapf(err, "cannot marshal %T to JSON", extraResources)
+		response.Fatal(rsp, errors.Errorf("cannot marshal %T: %w", verifiedExtras, err))
+		return rsp, nil
 	}
 	s := &structpb.Struct{}
 	err = protojson.Unmarshal(b, s)
 	if err != nil {
-		response.Fatal(rsp, errors.Wrapf(err, "cannot unmarshal JSON from %T into %T", extraResources, s))
+		response.Fatal(rsp, errors.Errorf("cannot unmarshal %T into %T: %w", extraResources, s,  err))
 		return rsp, nil
 	}
 	response.SetContextKey(rsp, FunctionContextKeyExtraResources, structpb.NewStructValue(s))
