@@ -22,11 +22,11 @@ spec:
     kind: XR
   mode: Pipeline
   pipeline:
-  - step: environmentConfigs
+  - step: pull-extra-resources
     functionRef:
       name: function-extra-resources
     input:
-      apiVersion: extraresources.fn.crossplane.io/v1beta1
+      apiVersion: extra-resources.fn.crossplane.io/v1beta1
       kind: Input
       spec:
         extraResources:
@@ -97,7 +97,7 @@ Shoud get the function process/server build and running to serve CLI function re
 
 `./run.sh` will use the crossplane CLI to run our basic example in `./examples`
 
-### Crossplnae Function basics.
+### Crossplane Function Basics
 
 This function uses [Go][go], [Docker][docker], and the [Crossplane CLI][cli].
 
